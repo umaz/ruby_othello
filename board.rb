@@ -229,8 +229,3 @@ class Board
     return count
   end
 end
-
-board = Board.new
-p board.get_putable_cells(BLACK)
-board.reverse(3,4,BLACK)
-board.show_board
