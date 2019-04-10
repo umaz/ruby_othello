@@ -44,7 +44,101 @@ class Board
     print("\n 黒:#{stone_count[0]}, 白:#{stone_count[1]}\n\n")
   end
 
-  private
+  #ひっくり返せる方向の取得
+  def turnable_direction(row, col, color)
+    direction = NONE
+    #左上
+    if @board[row-1][col-1] == -color #相手の色がある場合
+      i = 2
+      while @board[row-i][col-i] == -color #相手の色が続くまで
+        i += 1
+      end
+      if @board[row-i][col-i] == color #相手の色に続くのが自分の色の場合
+        direction |= UPPER_LEFT
+      end
+    end
+    if @board[row-1][col] == -color #上
+      i = 2
+      while @board[row-i][col] == -color
+        i += 1
+      end
+      if @board[row-i][col] == color
+        direction |= UPPER
+      end
+    end
+    if @board[row-1][col+1] == -color #右上
+      i = 2
+      while @board[row-i][col+i] == -color
+        i += 1
+      end
+      if @board[row-i][col+i] == color
+        direction |= UPPER_RIGHT
+      end
+    end
+    if @board[row][col+1] == -color #右
+      i = 2
+      while @board[row][col+i] == -color
+        i += 1
+      end
+      if @board[row][col+i] == color
+        direction |= RIGHT
+      end
+    end
+    if @board[row+1][col+1] == -color #右下
+      i = 2
+      while @board[row+i][col+i] == -color
+        i += 1
+      end
+      if @board[row+i][col+i] == color
+        direction |= LOWER_RIGHT
+      end
+    end
+    if @board[row+1][col] == -color #下
+      i = 2
+      while @board[row+i][col] == -color
+        i += 1
+      end
+      if @board[row+i][col] == color
+        direction |= LOWER
+      end
+    end
+    if @board[row+1][col-1] == -color #左下
+      i = 2
+      while @board[row+i][col-i] == -color
+        i += 1
+      end
+      if @board[row+i][col-i] == color
+        direction |= LOWER_LEFT
+      end
+    end
+    if @board[row][col-1] == -color #左
+      i = 2
+      while @board[row][col-i] == -color
+        i += 1
+      end
+      if @board[row][col-i] == color
+        direction |= LEFT
+      end
+    end
+    return direction
+  end
+
+  #ひっくり返せるマスの一覧を取得
+  def get_putable_cells(color)
+    putable_cells = []
+    @board.each_with_index do |row, i|
+      row.each_with_index do |col, j|
+        if col == EMPTY #空きマス
+          turnable_direction = turnable_direction(i, j, color)
+          if turnable_direction != NONE #ひっくり返せる方向が存在する=石を置けるマス
+            putable_cells.push([i,j]) #座標を格納
+          end
+        end
+      end
+    end
+    return putable_cells
+  end
+
   #石の数のカウント
   def count
     black = 0
@@ -63,4 +157,5 @@ class Board
     return count
   end
 end
-Board.new.show_board
+
+p Board.new.get_putable_cells(BLACK)
