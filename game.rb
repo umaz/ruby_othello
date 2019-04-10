@@ -44,10 +44,8 @@ class Game
       @board.show_board
       phase
     when MOVE
-      putable_cells = @board.get_putable_cells(@player.color)
       print("#{COLOR[@player.color]}の手番です\n")
-      print("#{@turn+1}手目:")
-      move = @player.put_stone(putable_cells)
+      move = @player.put_stone(@board, @turn+1)
       reverse(move)
       @board.show_board
       phase
