@@ -1,11 +1,27 @@
 require "./constant"
 require "./board"
-require "./player"
+require "./human"
+require "./com"
 
 class Game
-  def initialize
-    @first = Player.new(BLACK)
-    @second = Player.new(WHITE)
+  def initialize(mode, order, lv)
+    case mode
+    when COM
+      case order
+      when FIRST
+        @first = Human.new(BLACK)
+        @second = Com.new(WHITE, lv)
+      when SECOND
+        @first = Com.new(BLACK, lv)
+        @second = Human.new(WHITE)
+      end
+    when HUMAN
+      @first = Human.new(BLACK)
+      @second = Human.new(WHITE)
+    when WATCH
+      @first = Com.new(BLACK, lv[0])
+      @second = Com.new(WHITE, lv[1])
+    end
     @turn = 0
     @player = @first #黒石からスタート
     @board = Board.new
@@ -28,10 +44,8 @@ class Game
       @board.show_board
       phase
     when MOVE
-      putable_cells = @board.get_putable_cells(@player.color)
       print("#{COLOR[@player.color]}の手番です\n")
-      print("#{@turn+1}手目:")
-      move = @player.put_stone(putable_cells)
+      move = @player.put_stone(@board, @turn+1)
       reverse(move)
       @board.show_board
       phase
@@ -84,5 +98,3 @@ class Game
     end
   end
 end
-
-Game.new
