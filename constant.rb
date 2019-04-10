@@ -24,3 +24,13 @@ LEFT = 128 #= 1000 0000
 MOVE = 1
 PASS = 2
 FINISH = 3
+
+#モード番号
+COM = 1
+HUMAN = 2
+WATCH = 3
+EXIT = 4
+
+#先手後手
+FIRST = 1
+SECOND = 2
