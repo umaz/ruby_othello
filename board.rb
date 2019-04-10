@@ -44,6 +44,78 @@ class Board
     print("\n 黒:#{stone_count[0]}, 白:#{stone_count[1]}\n\n")
   end
 
+  #石をひっくり返す
+  def reverse(row, col, color) #石をおいた位置
+    @board[row][col] = color
+    turn_direction = turnable_direction(row, col, color) #返せる方向を取得
+    turned_cells = [] #返す方向と返した枚数
+    if turn_direction & UPPER_LEFT != 0
+      i = 1
+      while @board[row-i][col-i] == -color #相手の色が続くまで
+        @board[row-i][col-i] = color
+        turned_cells.push([row-i, col-i])
+        i += 1
+      end
+    end
+    if turn_direction & UPPER != 0
+      i = 1
+      while @board[row-i][col] == -color
+        @board[row-i][col] = color
+        turned_cells.push([row-i, col])
+        i += 1
+      end
+    end
+    if turn_direction & UPPER_RIGHT != 0
+      i = 1
+      while @board[row-i][col+i] == -color
+        @board[row-i][col+i] = color
+        turned_cells.push([row-i, col+i])
+        i += 1
+      end
+    end
+    if turn_direction & RIGHT != 0
+      i = 1
+      while @board[row][col+i] == -color
+        @board[row][col+i] = color
+        turned_cells.push([row, col+i])
+        i += 1
+      end
+    end
+    if turn_direction & LOWER_RIGHT != 0
+      i = 1
+      while @board[row+i][col+i] == -color
+        @board[row+i][col+i] = color
+        turned_cells.push([row+i, col+i])
+        i += 1
+      end
+    end
+    if turn_direction & LOWER != 0
+      i = 1
+      while @board[row+i][col] == -color
+        @board[row+i][col] = color
+        turned_cells.push([row+i, col])
+        i += 1
+      end
+    end
+    if turn_direction & LOWER_LEFT != 0
+      i = 1
+      while @board[row+i][col-i] == -color
+        @board[row+i][col-i] = color
+        turned_cells.push([row+i, col-i])
+        i += 1
+      end
+    end
+    if turn_direction & LEFT != 0
+      i = 1
+      while @board[row][col-i] == -color
+        @board[row][col-i] = color
+        turned_cells.push([row, col-i])
+        i += 1
+      end
+    end
+    return turned_cells
+  end
+
   #ひっくり返せる方向の取得
   def turnable_direction(row, col, color)
     direction = NONE
@@ -158,4 +230,7 @@ class Board
   end
 end
 
-p Board.new.get_putable_cells(BLACK)
+board = Board.new
+p board.get_putable_cells(BLACK)
+board.reverse(3,4,BLACK)
+board.show_board
