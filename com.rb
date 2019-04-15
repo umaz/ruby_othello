@@ -37,19 +37,50 @@ class Com < Player
 
   #BOARD_SCOREのもっとも大きくなるマスに石を打つ
   def lv2(board)
-    cell_score = {-9999999999 => [[0,0]]}
+    max_score = -9999999999
+    candicate_cells = [[0,0]]
     putable_cells = board.get_putable_cells(@color)
     print(cell_list(putable_cells), "\n")
     putable_cells.each do |cell|
       print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", BOARD_SCORE[cell[0]][cell[1]], "\n")
       score = BOARD_SCORE[cell[0]][cell[1]]
-      if score > cell_score.keys.last
-        cell_score[score] = [cell]
-      elsif score == cell_score.keys.last
-        cell_score[score].push(cell)
+      if score > max_score
+        candicate_cells = [cell]
+        max_score = score
+      elsif score == max_score
+        candicate_cells.push(cell)
       end
     end
-    put_cell = select_com_move(cell_score)
+    put_cell = select_com_move(candicate_cells)
+    return put_cell
+  end
+
+  def lv3(board)
+    max_score = -9999999999
+    candicate_cells = [[0,0]]
+    putable_cells = board.get_putable_cells(@color)
+    print(cell_list(putable_cells), "\n")
+    putable_cells.each do |cell|
+      undo = board.board.map(&:dup) #深いコピー
+      board.reverse(cell[0], cell[1], @color)
+      score = 0
+      board.board.each_with_index do |row, i|
+        row.each_with_index do |col, j|
+          if col == @color
+            score += BOARD_SCORE[i][j]
+          end
+        end
+      end
+      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
+      board.undo(undo)
+      if score > max_score
+        candicate_cells = [cell]
+        max_score = score
+      elsif score == max_score
+        candicate_cells.push(cell)
+      end
+    end
+    put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
@@ -61,10 +92,8 @@ class Com < Player
     return cell_list
   end
 
-  def select_com_move(cell_score)
-    score = cell_score.keys.last
-    cell = cell_score[score]
-    cell = cell.sample
+  def select_com_move(candicate_cells)
+    cell = candicate_cells.sample
     return cell
   end
 end

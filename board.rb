@@ -48,12 +48,10 @@ class Board
   def reverse(row, col, color) #石をおいた位置
     @board[row][col] = color
     turn_direction = turnable_direction(row, col, color) #返せる方向を取得
-    turned_cells = [] #返す方向と返した枚数
     if turn_direction & UPPER_LEFT != 0
       i = 1
       while @board[row-i][col-i] == -color #相手の色が続くまで
         @board[row-i][col-i] = color
-        turned_cells.push([row-i, col-i])
         i += 1
       end
     end
@@ -61,7 +59,6 @@ class Board
       i = 1
       while @board[row-i][col] == -color
         @board[row-i][col] = color
-        turned_cells.push([row-i, col])
         i += 1
       end
     end
@@ -69,7 +66,6 @@ class Board
       i = 1
       while @board[row-i][col+i] == -color
         @board[row-i][col+i] = color
-        turned_cells.push([row-i, col+i])
         i += 1
       end
     end
@@ -77,7 +73,6 @@ class Board
       i = 1
       while @board[row][col+i] == -color
         @board[row][col+i] = color
-        turned_cells.push([row, col+i])
         i += 1
       end
     end
@@ -85,7 +80,6 @@ class Board
       i = 1
       while @board[row+i][col+i] == -color
         @board[row+i][col+i] = color
-        turned_cells.push([row+i, col+i])
         i += 1
       end
     end
@@ -93,7 +87,6 @@ class Board
       i = 1
       while @board[row+i][col] == -color
         @board[row+i][col] = color
-        turned_cells.push([row+i, col])
         i += 1
       end
     end
@@ -101,7 +94,6 @@ class Board
       i = 1
       while @board[row+i][col-i] == -color
         @board[row+i][col-i] = color
-        turned_cells.push([row+i, col-i])
         i += 1
       end
     end
@@ -109,11 +101,9 @@ class Board
       i = 1
       while @board[row][col-i] == -color
         @board[row][col-i] = color
-        turned_cells.push([row, col-i])
         i += 1
       end
     end
-    return turned_cells
   end
 
   #ひっくり返せる方向の取得
@@ -209,6 +199,10 @@ class Board
       end
     end
     return putable_cells
+  end
+
+  def undo(board)
+    @board = board
   end
 
   #石の数のカウント
