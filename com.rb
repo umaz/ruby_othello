@@ -37,22 +37,147 @@ class Com < Player
 
   #BOARD_SCOREのもっとも大きくなるマスに石を打つ
   def lv2(board)
-    cell_score = {-9999999999 => [[0,0]]}
+    max_score = -9999999999
+    candicate_cells = [[0,0]]
     putable_cells = board.get_putable_cells(@color)
     print(cell_list(putable_cells), "\n")
     putable_cells.each do |cell|
       print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", BOARD_SCORE[cell[0]][cell[1]], "\n")
       score = BOARD_SCORE[cell[0]][cell[1]]
-      if score > cell_score.keys.last
-        cell_score[score] = [cell]
-      elsif score == cell_score.keys.last
-        cell_score[score].push(cell)
+      if score > max_score
+        candicate_cells = [cell]
+        max_score = score
+      elsif score == max_score
+        candicate_cells.push(cell)
       end
     end
-    put_cell = select_com_move(cell_score)
+    put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
+  def lv3(board)
+    max_score = -9999999999
+    candicate_cells = [[0,0]]
+    putable_cells = board.get_putable_cells(@color)
+    print(cell_list(putable_cells), "\n")
+    putable_cells.each do |cell|
+      # undo = Marshal.load(Marshal.dump(board.board)) これでも可
+      undo = board.board.map(&:dup) #深いコピー
+      board.reverse(cell[0], cell[1], @color)
+      score = 0
+      board.board.each_with_index do |row, i|
+        row.each_with_index do |col, j|
+          if col == @color
+            score += BOARD_SCORE[i][j]
+          end
+        end
+      end
+      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
+      board.undo(undo)
+      if score > max_score
+        candicate_cells = [cell]
+        max_score = score
+      elsif score == max_score
+        candicate_cells.push(cell)
+      end
+    end
+    put_cell = select_com_move(candicate_cells)
+    return put_cell
+  end
+
+  def lv4(board)
+    max_score = -9999999999
+    candicate_cells = [[0,0]]
+    depth = 4 #先読みの深さ
+    color = @color
+    putable_cells = board.get_putable_cells(color)
+    print(cell_list(putable_cells), "\n")
+    putable_cells.each do |cell|
+      # undo = Marshal.load(Marshal.dump(board.board)) これでも可
+      undo = board.board.map(&:dup) #深いコピー
+      board.reverse(cell[0], cell[1], color)
+      case status(board, -color, depth)
+      when FINISH
+        score = board_score(board)
+      when PASS
+        score = search(board, depth-1, color)
+      when MOVE
+        score = search(board, depth-1, -color)
+      end
+      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
+      board.undo(undo)
+      if score > max_score
+        candicate_cells = [cell]
+        max_score = score
+      elsif score == max_score
+        candicate_cells.push(cell)
+      end
+    end
+    put_cell = select_com_move(candicate_cells)
+    return put_cell
+  end
+
+  def search(board, depth, color)
+    minmax = 9999
+    putable_cells = board.get_putable_cells(color)
+    putable_cells.each do |cell|
+      undo = board.board.map(&:dup) #深いコピー
+      board.reverse(cell[0], cell[1], color)
+      case status(board, -color, depth)
+      when FINISH
+        score = board_score(board)
+      when PASS
+        score = search(board, depth-1, color)
+      when MOVE
+        score = search(board, depth-1, -color)
+      end
+      board.undo(undo)
+      #スコアの選択(αβ法)
+      if minmax == 9999
+        minmax = score
+      elsif color == @color
+        if score > minmax
+          minmax = score
+        end
+      else
+        if score < minmax
+          minmax = score
+        end
+      end
+    end
+    return minmax
+  end
+
+  def board_score(board)
+    score = 0
+    #スコアの算出
+    board.board.each_with_index do |row, i|
+      row.each_with_index do |col, j|
+        if col == @color
+          score += BOARD_SCORE[i][j]
+        end
+      end
+    end
+    return score
+  end
+
+  #状態判定
+  def status(board, color, depth)
+    if depth == 0
+      return FINISH
+    else
+      if board.get_putable_cells(color).size == 0
+        if board.get_putable_cells(-color).size == 0
+          return FINISH
+        else
+          return PASS
+        end
+      else
+        return MOVE
+      end
+    end
+  end
+  
   def cell_list(putable_cells)
     cell_list = "" #着手可能場所の一覧
     putable_cells.each do |cell|
@@ -61,10 +186,8 @@ class Com < Player
     return cell_list
   end
 
-  def select_com_move(cell_score)
-    score = cell_score.keys.last
-    cell = cell_score[score]
-    cell = cell.sample
+  def select_com_move(candicate_cells)
+    cell = candicate_cells.sample
     return cell
-  end
+  end  
 end
