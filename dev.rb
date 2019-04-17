@@ -27,7 +27,7 @@ end
 puts ""
 #AI1の勝ち数はresultの先手勝ち数とreverse_resultの後手勝ち数
 print("AI1(レベル#{first}):#{result[1]+reverse_result[-1]}勝(先手:#{result[1]}勝,後手#{reverse_result[-1]}勝)\n")
-print("AI2(レベル#{second}):#{result[-1]+reverse_result[1]}勝(先手:#{result[-1]}勝,後手#{reverse_result[1]}勝)\n")
+print("AI2(レベル#{second}):#{result[-1]+reverse_result[1]}勝(先手:#{reverse_result[1]}勝,後手#{result[-1]}勝)\n")
 print("#{result[0]+reverse_result[0]}引き分け\n")
 
 puts ""
