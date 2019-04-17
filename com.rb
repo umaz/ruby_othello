@@ -88,7 +88,7 @@ class Com < Player
   def lv4(board)
     max_score = -9999999999
     candicate_cells = [[0,0]]
-    depth = 4 #先読みの深さ
+    depth = 3 #先読みの深さ
     color = @color
     putable_cells = board.get_putable_cells(color)
     print(cell_list(putable_cells), "\n")
@@ -100,9 +100,9 @@ class Com < Player
       when FINISH
         score = board_score(board)
       when PASS
-        score = search(board, depth-1, color)
+        score = minmax(board, depth-1, color)
       when MOVE
-        score = search(board, depth-1, -color)
+        score = minmax(board, depth-1, -color)
       end
       print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
@@ -117,8 +117,42 @@ class Com < Player
     return put_cell
   end
 
-  def search(board, depth, color)
-    minmax = 9999
+  def lv5(board)
+    max_score = -9999999999
+    alpha = -9999999999
+    beta = 9999999999
+    candicate_cells = [[0,0]]
+    depth = 4 #先読みの深さ
+    color = @color
+    putable_cells = board.get_putable_cells(color)
+    print(cell_list(putable_cells), "\n")
+    putable_cells.each do |cell|
+      # undo = Marshal.load(Marshal.dump(board.board)) これでも可
+      undo = board.board.map(&:dup) #深いコピー
+      board.reverse(cell[0], cell[1], color)
+      case status(board, -color, depth)
+      when FINISH
+        score = board_score(board)
+      when PASS
+        score = alphabeta(board, depth-1, color, alpha, beta)
+      when MOVE
+        score = alphabeta(board, depth-1, -color, alpha, beta)
+      end
+      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
+      board.undo(undo)
+      if score > max_score
+        candicate_cells = [cell]
+        max_score = score
+      elsif score == max_score
+        candicate_cells.push(cell)
+      end
+    end
+    put_cell = select_com_move(candicate_cells)
+    return put_cell
+  end
+
+  def minmax(board, depth, color)
+    best_score = 9999
     putable_cells = board.get_putable_cells(color)
     putable_cells.each do |cell|
       undo = board.board.map(&:dup) #深いコピー
@@ -127,25 +161,68 @@ class Com < Player
       when FINISH
         score = board_score(board)
       when PASS
-        score = search(board, depth-1, color)
+        score = minmax(board, depth-1, color)
       when MOVE
-        score = search(board, depth-1, -color)
+        score = minmax(board, depth-1, -color)
       end
       board.undo(undo)
       #スコアの選択(αβ法)
-      if minmax == 9999
-        minmax = score
-      elsif color == @color
-        if score > minmax
-          minmax = score
+      if best_score == 9999
+        best_score = score
+      end
+      if color == @color && score > best_score
+        best_score = score
+      end
+      if color == -@color && score < best_score
+        best_score = score
+      end
+    end
+    return best_score
+  end
+
+  def alphabeta(board, depth, color, alpha, beta)
+    best_score = 9999
+    putable_cells = board.get_putable_cells(color)
+    putable_cells.each do |cell|
+      undo = board.board.map(&:dup) #深いコピー
+      board.reverse(cell[0], cell[1], color)
+      case status(board, -color, depth)
+      when FINISH
+        score = board_score(board)
+      when PASS
+        score = alphabeta(board, depth-1, color, alpha, beta)
+      when MOVE
+        score = alphabeta(board, depth-1, -color, alpha, beta)
+      end
+      board.undo(undo)
+      #スコアの選択(αβ法)
+      if best_score == 9999
+        best_score = score
+      end
+      if color == @color
+        if score > best_score
+          best_score = score
         end
-      else
-        if score < minmax
-          minmax = score
+        if best_score > alpha
+          alpha = best_score
+        end
+        if alpha >= beta
+          return best_score
+        end
+      end
+      if color == -@color
+        if score < best_score
+          best_score = score
+        end
+        if best_score < beta
+          beta = best_score
+        end
+        if alpha >= beta
+          return best_score
         end
       end
     end
-    return minmax
+    return best_score
   end
 
   def board_score(board)
