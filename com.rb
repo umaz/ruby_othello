@@ -52,6 +52,7 @@ class Com < Player
     return put_cell
   end
 
+  #BOARD_SCOREの合計が最も大きくなるマスに打つ
   def lv3(board)
     putable_cells = get_putable_cells(board)
     best_score, candicate_cells = set_default_value
@@ -74,6 +75,7 @@ class Com < Player
     return put_cell
   end
 
+  #depth手先まで読む
   def lv4(board)
     putable_cells = get_putable_cells(board)
     best_score, candicate_cells = set_default_value
@@ -97,6 +99,7 @@ class Com < Player
     return put_cell
   end
 
+  #alphabeta方で読みの高速化
   def lv5(board)
     putable_cells = get_putable_cells(board)
     best_score, candicate_cells, alpha, beta = set_default_value
@@ -120,6 +123,7 @@ class Com < Player
     return put_cell
   end
 
+  # 50手から完全読み
   def lv6(board, turn)
     putable_cells = get_putable_cells(board)
     best_score, candicate_cells, alpha, beta = set_default_value
@@ -149,6 +153,7 @@ class Com < Player
     return put_cell
   end
 
+  # 47手で勝敗読み
   def lv7(board, turn)
     putable_cells = get_putable_cells(board)
     best_score, candicate_cells, alpha, beta = set_default_value
@@ -180,6 +185,7 @@ class Com < Player
     return put_cell
   end
 
+  # BOARD_SCOREだけでなく着手可能手数も考慮に入れる
   def lv8(board, turn)
     putable_cells = get_putable_cells(board)
     best_score, candicate_cells, alpha, beta = set_default_value
