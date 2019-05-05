@@ -26,16 +26,16 @@ class Menu
         order = nil
         lv = nil
       when WATCH
-        print("先手のレベルを選択してください(1~5):")
+        print("先手のレベルを選択してください(1~8):")
           first = select_lv
-        print("後手のレベルを選択してください(1~5):")
+        print("後手のレベルを選択してください(1~8):")
         second = select_lv
         order = nil
         lv = [first, second]
       when EXIT
         exit
       else
-        print("1~4で選択したください\n\n")
+        print("1~8で選択したください\n\n")
         initialize
       end
       Game.new(mode, order, lv)
@@ -44,8 +44,8 @@ class Menu
 
   def select_lv
     lv = gets.chomp.to_i
-    if lv > 9 || lv < 1
-      print("1~9で入力してください\n\n")
+    if lv > 8 || lv < 1
+      print("1~8で入力してください\n\n")
       lv = select_lv
     end
     return lv
