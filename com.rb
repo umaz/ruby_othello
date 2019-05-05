@@ -35,37 +35,27 @@ class Com < Player
 
   private
   def lv1(board)
-    putable_cells = board.get_putable_cells(@color)
-    print(cell_list(putable_cells), "\n")
+    putable_cells = get_putable_cells(board)
     put_cell = putable_cells.sample #空きますからランダムに1つ取得
     return put_cell
   end
 
   #BOARD_SCOREのもっとも大きくなるマスに石を打つ
   def lv2(board)
-    best_score = -9999999999
-    candicate_cells = [[0,0]]
-    putable_cells = board.get_putable_cells(@color)
-    print(cell_list(putable_cells), "\n")
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells = set_default_value
     putable_cells.each do |cell|
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", BOARD_SCORE[cell[0]][cell[1]], "\n")
       score = BOARD_SCORE[cell[0]][cell[1]]
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
+    p candicate_cells
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
   def lv3(board)
-    best_score = -9999999999
-    candicate_cells = [[0,0]]
-    putable_cells = board.get_putable_cells(@color)
-    print(cell_list(putable_cells), "\n")
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells = set_default_value
     putable_cells.each do |cell|
       # undo = Marshal.load(Marshal.dump(board.board)) これでも可
       undo = board.board.map(&:dup) #深いコピー
@@ -78,207 +68,173 @@ class Com < Player
           end
         end
       end
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
   def lv4(board)
-    best_score = -9999999999
-    candicate_cells = [[0,0]]
-    depth = 3 #先読みの深さ
-    color = @color
-    putable_cells = board.get_putable_cells(color)
-    print(cell_list(putable_cells), "\n")
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells = set_default_value
+    depth = 4 #先読みの深さ
     putable_cells.each do |cell|
       # undo = Marshal.load(Marshal.dump(board.board)) これでも可
       undo = board.board.map(&:dup) #深いコピー
-      board.reverse(cell[0], cell[1], color)
-      case status(board, -color, depth)
+      board.reverse(cell[0], cell[1], @color)
+      case status(board, -@color, depth)
       when FINISH
         score = board_score(board)
       when PASS
-        score = minmax(board, depth-1, color)
+        score = minmax(board, depth-1, @color)
       when MOVE
-        score = minmax(board, depth-1, -color)
+        score = minmax(board, depth-1, -@color)
       end
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
   def lv5(board)
-    best_score = -9999999999
-    alpha = -9999999999
-    beta = 9999999999
-    candicate_cells = [[0,0]]
-    depth = 4 #先読みの深さ
-    color = @color
-    putable_cells = board.get_putable_cells(color)
-    print(cell_list(putable_cells), "\n")
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells, alpha, beta = set_default_value
+    depth = 5 #先読みの深さ
     putable_cells.each do |cell|
       # undo = Marshal.load(Marshal.dump(board.board)) これでも可
       undo = board.board.map(&:dup) #深いコピー
-      board.reverse(cell[0], cell[1], color)
-      case status(board, -color, depth)
+      board.reverse(cell[0], cell[1], @color)
+      case status(board, -@color, depth)
       when FINISH
         score = board_score(board)
       when PASS
-        score = alphabeta(board, depth-1, color, alpha, beta, BOARD)
+        score = alphabeta(board, depth-1, @color, alpha, beta, BOARD)
       when MOVE
-        score = alphabeta(board, depth-1, -color, alpha, beta, BOARD)
+        score = alphabeta(board, depth-1, -@color, alpha, beta, BOARD)
       end
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
   def lv6(board, turn)
-    best_score = -9999999999
-    alpha = -9999999999
-    beta = 9999999999
-    candicate_cells = [[0,0]]
-    depth = 4 #先読みの深さ
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells, alpha, beta = set_default_value
+    depth = -1 #先読みの深さ
     if turn > 49
-      type = PERFECT
-      depth = -1
+      score_type = PERFECT
     else
-      type = BOARD
+      score_type = BOARD
+      depth = 5
     end
-  color = @color
-    putable_cells = board.get_putable_cells(color)
-    print(cell_list(putable_cells), "\n")
     putable_cells.each do |cell|
       # undo = Marshal.load(Marshal.dump(board.board)) これでも可
       undo = board.board.map(&:dup) #深いコピー
-      board.reverse(cell[0], cell[1], color)
-      case status(board, -color, depth)
+      board.reverse(cell[0], cell[1], @color)
+      case status(board, -@color, depth)
       when FINISH
         score = perfect_score(board)
       when PASS
-        score = alphabeta(board, depth-1, color, alpha, beta, type)
+        score = alphabeta(board, depth-1, @color, alpha, beta, score_type)
       when MOVE
-        score = alphabeta(board, depth-1, -color, alpha, beta, type)
+        score = alphabeta(board, depth-1, -@color, alpha, beta, score_type)
       end
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
   def lv7(board, turn)
-    best_score = -9999999999
-    alpha = -9999999999
-    beta = 9999999999
-    candicate_cells = [[0,0]]
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells, alpha, beta = set_default_value
     depth = -1 #先読みの深さ
-    color = @color
     if turn > 49
-      type = PERFECT
+      score_type = PERFECT
     elsif turn > 47
-      type = WINNER
+      score_type = WINNER
     else
-      type = BOARD
-      depth = 4
+      score_type = BOARD
+      depth = 5
     end
-    putable_cells = board.get_putable_cells(color)
-    print(cell_list(putable_cells), "\n")
     putable_cells.each do |cell|
       # undo = Marshal.load(Marshal.dump(board.board)) これでも可
       undo = board.board.map(&:dup) #深いコピー
-      board.reverse(cell[0], cell[1], color)
-      case status(board, -color, depth)
+      board.reverse(cell[0], cell[1], @color)
+      case status(board, -@color, depth)
       when FINISH
         score = perfect_score(board)
       when PASS
-        score = alphabeta(board, depth-1, color, alpha, beta, type)
+        score = alphabeta(board, depth-1, @color, alpha, beta, score_type)
       when MOVE
-        score = alphabeta(board, depth-1, -color, alpha, beta, type)
+        score = alphabeta(board, depth-1, -@color, alpha, beta, score_type)
       end
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
 
   def lv8(board, turn)
-    best_score = -9999999999
-    alpha = -9999999999
-    beta = 9999999999
-    candicate_cells = [[0,0]]
+    putable_cells = get_putable_cells(board)
+    best_score, candicate_cells, alpha, beta = set_default_value
     depth = -1 #先読みの深さ
-    color = @color
     if turn > 49
-      type = PERFECT
+      score_type = PERFECT
     elsif turn > 47
-      type = WINNER
+      score_type = WINNER
     else
-      type = HANDS
-      depth = 4
+      score_type = HANDS
+      depth = 5
     end
-    putable_cells = board.get_putable_cells(color)
-    print(cell_list(putable_cells), "\n")
     putable_cells.each do |cell|
       # undo = Marshal.load(Marshal.dump(board.board)) これでも可
       undo = board.board.map(&:dup) #深いコピー
-      board.reverse(cell[0], cell[1], color)
-      case status(board, -color, depth)
+      board.reverse(cell[0], cell[1], @color)
+      case status(board, -@color, depth)
       when FINISH
         score = perfect_score(board)
       when PASS
-        score = alphabeta(board, depth-1, color, alpha, beta, type)
+        score = alphabeta(board, depth-1, @color, alpha, beta, score_type)
       when MOVE
-        score = alphabeta(board, depth-1, -color, alpha, beta, type)
+        score = alphabeta(board, depth-1, -@color, alpha, beta, score_type)
       end
-      print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
       board.undo(undo)
-      if score > best_score
-        candicate_cells = [cell]
-        best_score = score
-      elsif score == best_score
-        candicate_cells.push(cell)
-      end
+      candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
     put_cell = select_com_move(candicate_cells)
     return put_cell
+  end
+
+  def get_putable_cells(board)
+    putable_cells = board.get_putable_cells(@color)
+    print(cell_list(putable_cells), "\n")
+    return putable_cells
+  end
+
+  def set_default_value
+    best_score = -9999999999
+    candicate_cells = [[0,0]]
+    alpha = -9999999999
+    beta = 9999999999
+    return best_score, candicate_cells, alpha, beta
+  end
+
+  def evaluate(cell, score, best_score, candicate_cells)
+    print(COL_NUM.key(cell[1]) + ROW_NUM.key(cell[0]), ": ", score, "\n")
+    if score > best_score
+      candicate_cells = [cell]
+      best_score = score
+    elsif score == best_score
+      candicate_cells.push(cell)
+    end
+    return candicate_cells, best_score
   end
 
   def minmax(board, depth, color)
@@ -310,7 +266,7 @@ class Com < Player
     return best_score
   end
 
-  def alphabeta(board, depth, color, alpha, beta, type)
+  def alphabeta(board, depth, color, alpha, beta, score_type)
     best_score = 9999
     putable_cells = board.get_putable_cells(color)
     putable_cells.each do |cell|
@@ -318,7 +274,7 @@ class Com < Player
       board.reverse(cell[0], cell[1], color)
       case status(board, -color, depth)
       when FINISH
-        case type
+        case score_type
         when PERFECT
           score = perfect_score(board)
         when WINNER
@@ -334,9 +290,9 @@ class Com < Player
           end
         end
       when PASS
-        score = alphabeta(board, depth-1, color, alpha, beta, type)
+        score = alphabeta(board, depth-1, color, alpha, beta, score_type)
       when MOVE
-        score = alphabeta(board, depth-1, -color, alpha, beta, type)
+        score = alphabeta(board, depth-1, -color, alpha, beta, score_type)
       end
       board.undo(undo)
       #スコアの選択(αβ法)
