@@ -48,7 +48,6 @@ class Com < Player
       score = BOARD_SCORE[cell[0]][cell[1]]
       candicate_cells, best_score = evaluate(cell, score, best_score, candicate_cells)
     end
-    p candicate_cells
     put_cell = select_com_move(candicate_cells)
     return put_cell
   end
