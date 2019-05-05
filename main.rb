@@ -44,8 +44,8 @@ class Menu
 
   def select_lv
     lv = gets.chomp.to_i
-    if lv > 5 || lv < 1
-      print("1~5で入力してください\n\n")
+    if lv > 9 || lv < 1
+      print("1~9で入力してください\n\n")
       lv = select_lv
     end
     return lv

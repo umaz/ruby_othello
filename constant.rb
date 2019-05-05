@@ -35,6 +35,12 @@ EXIT = 4
 FIRST = 1
 SECOND = 2
 
+#search_type
+PERFECT = 1
+WINNER = 2
+BOARD = 3
+HANDS = 4
+
 #スコア
 BOARD_SCORE = [
   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
