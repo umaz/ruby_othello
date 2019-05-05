@@ -283,9 +283,9 @@ class Com < Player
         when HANDS
           score = board_score(board)
           if color == @color
-            score += 10 * putable_cells.size
+            score += 5 * putable_cells.size
           else
-            score -= 10 * putable_cells.size
+            score -= 5 * putable_cells.size
           end
         end
       when PASS
